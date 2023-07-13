@@ -65,9 +65,8 @@ class RenderCapturer<K extends RenderFormat> {
       await Future.wait(_handlers);
       return _handlers.length < _unhandledCaptures.length;
     });
-    final capturingDuration = Duration(
-        milliseconds: DateTime.now().millisecondsSinceEpoch -
-            startTime!.millisecondsSinceEpoch);
+    final capturingDuration =
+        Duration(milliseconds: DateTime.now().millisecondsSinceEpoch - startTime!.millisecondsSinceEpoch);
     return session.upgrade(capturingDuration, 1);
   }
 
@@ -90,8 +89,8 @@ class RenderCapturer<K extends RenderFormat> {
   Future<RenderSession<K, RealRenderSettings>> finish() async {
     assert(_rendering, "Cannot finish capturing as, no active capturing.");
     final capturingDuration = Duration(
-        milliseconds: DateTime.now().millisecondsSinceEpoch -
-            startTime!.millisecondsSinceEpoch); // log end of capturing
+        milliseconds:
+            DateTime.now().millisecondsSinceEpoch - startTime!.millisecondsSinceEpoch); // log end of capturing
     _rendering = false;
     startingDuration = null;
     // * wait for handlers
@@ -115,8 +114,7 @@ class RenderCapturer<K extends RenderFormat> {
   }) async {
     if (!_rendering) return;
     final targetFrameRate = session.settings.asMotion?.frameRate ?? 1;
-    final relativeTimeStamp =
-        binderTimeStamp - (startingDuration ?? Duration.zero);
+    final relativeTimeStamp = binderTimeStamp - (startingDuration ?? Duration.zero);
     final nextMilliSecond = (1 / targetFrameRate) * frame * 1000;
     if (nextMilliSecond > relativeTimeStamp.inMilliseconds) {
       // add a new PostFrameCallback to know about the next frame
@@ -131,8 +129,7 @@ class RenderCapturer<K extends RenderFormat> {
       return;
     }
     try {
-      final totalFrameTarget =
-          duration != null ? duration.inSeconds * targetFrameRate : null;
+      final totalFrameTarget = duration != null ? duration.inSeconds * targetFrameRate : null;
       _captureFrame(frame, totalFrameTarget);
     } on RenderException catch (exception) {
       session.recordError(exception);
@@ -158,12 +155,10 @@ class RenderCapturer<K extends RenderFormat> {
       // * retrieve bytes
       // toByteData(format: ui.ImageByteFormat.png) takes way longer than raw
       // and then converting to png with ffmpeg
-      final ByteData? byteData =
-          await capture.toByteData(format: ui.ImageByteFormat.rawRgba);
+      final ByteData? byteData = await capture.toByteData(format: ui.ImageByteFormat.rawRgba);
       final rawIntList = byteData!.buffer.asInt8List();
       // * write raw file for processing
-      final rawFile = session
-          .createProcessFile("frameHandling/frame_raw$captureNumber.bmp");
+      final rawFile = session.createProcessFile("frameHandling/frame_raw$captureNumber.bmp");
       await rawFile.writeAsBytes(rawIntList);
       // * write & convert file (to save storage)
       final file = session.createInputFile("frame$captureNumber.png");
@@ -186,8 +181,7 @@ class RenderCapturer<K extends RenderFormat> {
       rawFile.deleteSync();
       if (!_rendering) {
         //only record next state, when rendering is done not to mix up notification
-        _recordActivity(RenderState.handleCaptures, captureNumber,
-            totalFrameTarget, "Handled frame $captureNumber");
+        _recordActivity(RenderState.handleCaptures, captureNumber, totalFrameTarget, "Handled frame $captureNumber");
       }
     } catch (e) {
       session.recordError(
@@ -205,8 +199,7 @@ class RenderCapturer<K extends RenderFormat> {
   /// and images still available.
   void _triggerHandler([int? totalFrameTarget]) {
     final nextCaptureIndex = _handlers.length;
-    if (_activeHandlers <
-            (session.settings.asMotion?.simultaneousCaptureHandlers ?? 1) &&
+    if (_activeHandlers < (session.settings.asMotion?.simultaneousCaptureHandlers ?? 1) &&
         nextCaptureIndex < _unhandledCaptures.length) {
       _handlers.add(_handleCapture(nextCaptureIndex, totalFrameTarget));
     }
@@ -231,8 +224,7 @@ class RenderCapturer<K extends RenderFormat> {
       throw const RenderException(
         "Invalid frame sizes. "
         "All Render frames must have a fixed size during capturing",
-        details:
-            "The render widget might be wrapped by an expandable widget that "
+        details: "The render widget might be wrapped by an expandable widget that "
             "changes size during capturing.",
         fatal: true,
       );
@@ -240,15 +232,13 @@ class RenderCapturer<K extends RenderFormat> {
     // * initiate handler
     _unhandledCaptures.add(image);
     _triggerHandler(totalFrameTarget);
-    _recordActivity(RenderState.capturing, frameNumber, totalFrameTarget,
-        "Captured frame $frameNumber");
+    _recordActivity(RenderState.capturing, frameNumber, totalFrameTarget, "Captured frame $frameNumber");
   }
 
   /// Using the `RenderRepaintBoundary` to capture the current frame.
   ui.Image _captureContext(GlobalKey key) {
     try {
-      final renderObject =
-          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final renderObject = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (renderObject == null) {
         throw const RenderException(
           "Capturing frame context unsuccessful as context is null."
@@ -267,23 +257,19 @@ class RenderCapturer<K extends RenderFormat> {
   /// Captures a widget-frame that is not build in a widget tree.
   /// Inspired by [screenshot plugin](https://github.com/SachinGanesh/screenshot)
   ui.Image _captureWidget(Widget widget) {
-    assert(context != null,
-        "Capturing from widget requires valid context of in RenderCapturer.");
+    assert(context != null, "Capturing from widget requires valid context of in RenderCapturer.");
     try {
       final RenderRepaintBoundary repaintBoundary = RenderRepaintBoundary();
 
       final flutterView = View.of(context!);
-      Size logicalSize =
-          flutterView.physicalSize / flutterView.devicePixelRatio;
+      Size logicalSize = flutterView.physicalSize / flutterView.devicePixelRatio;
       Size imageSize = flutterView.physicalSize;
 
-      assert(logicalSize.aspectRatio.toStringAsPrecision(5) ==
-          imageSize.aspectRatio.toStringAsPrecision(5));
+      assert(logicalSize.aspectRatio.toStringAsPrecision(5) == imageSize.aspectRatio.toStringAsPrecision(5));
 
       final RenderView renderView = RenderView(
         view: flutterView,
-        child: RenderPositionedBox(
-            alignment: Alignment.center, child: repaintBoundary),
+        child: RenderPositionedBox(alignment: Alignment.center, child: repaintBoundary),
         configuration: ViewConfiguration(
           size: logicalSize,
           devicePixelRatio: session.settings.pixelRatio,
@@ -291,19 +277,17 @@ class RenderCapturer<K extends RenderFormat> {
       );
 
       final PipelineOwner pipelineOwner = PipelineOwner();
-      final BuildOwner buildOwner =
-          BuildOwner(focusManager: FocusManager(), onBuildScheduled: () {});
+      final BuildOwner buildOwner = BuildOwner(focusManager: FocusManager(), onBuildScheduled: () {});
 
       pipelineOwner.rootNode = renderView;
       renderView.prepareInitialFrame();
 
-      final RenderObjectToWidgetElement<RenderBox> rootElement =
-          RenderObjectToWidgetAdapter<RenderBox>(
-              container: repaintBoundary,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: widget,
-              )).attachToRenderTree(
+      final RenderObjectToWidgetElement<RenderBox> rootElement = RenderObjectToWidgetAdapter<RenderBox>(
+          container: repaintBoundary,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: widget,
+          )).attachToRenderTree(
         buildOwner,
       );
       buildOwner.buildScope(
@@ -324,8 +308,7 @@ class RenderCapturer<K extends RenderFormat> {
       } catch (_) {}
        */
 
-      return repaintBoundary.toImageSync(
-          pixelRatio: session.settings.pixelRatio);
+      return repaintBoundary.toImageSync(pixelRatio: session.settings.pixelRatio);
     } catch (e) {
       throw RenderException(
         "Unknown error while capturing frame context. Trying next frame.",
@@ -335,12 +318,9 @@ class RenderCapturer<K extends RenderFormat> {
   }
 
   /// Recording the activity of the current session specifically for capturing
-  void _recordActivity(
-      RenderState state, int frame, int? totalFrameTarget, String message) {
+  void _recordActivity(RenderState state, int frame, int? totalFrameTarget, String message) {
     if (totalFrameTarget != null) {
-      session.recordActivity(
-          state, ((1 / totalFrameTarget) * frame).clamp(0.0, 1.0),
-          message: message);
+      session.recordActivity(state, ((1 / totalFrameTarget) * frame).clamp(0.0, 1.0), message: message);
     } else {
       // capturing activity when recording (no time limit set)
       session.recordActivity(state, null, message: message);

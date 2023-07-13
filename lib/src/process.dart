@@ -22,13 +22,11 @@ abstract class RenderProcessor<T extends RenderFormat> {
   ///Converts saved frames from temporary directory to output file
   Future<void> process() async {
     if (_processing) {
-      throw const RenderException(
-          "Cannot start new process, during an active one.");
+      throw const RenderException("Cannot start new process, during an active one.");
     }
     _processing = true;
     try {
-      final output =
-          await _processTask(session.format.processShare);
+      final output = await _processTask(session.format.processShare);
       session.recordResult(output);
       _processing = false;
     } on RenderException catch (error) {
@@ -39,8 +37,7 @@ abstract class RenderProcessor<T extends RenderFormat> {
   /// Processes task frames and writes the output with the specific format
   /// Returns the process output file.
   Future<File> _processTask(double progressShare) async {
-    final mainOutputFile =
-        session.createOutputFile("output_main.${session.format.extension}");
+    final mainOutputFile = session.createOutputFile("output_main.${session.format.extension}");
     // Receive main operation processing instructions
     final operation = session.format.processor(
       inputPath: inputPath,
@@ -56,8 +53,7 @@ abstract class RenderProcessor<T extends RenderFormat> {
 
   /// Wrapper around the FFmpeg command execution. Takes care of notifying the
   /// session about the progress of execution.
-  Future<void> _executeCommand(List<String> command,
-      {required double progressShare}) async {
+  Future<void> _executeCommand(List<String> command, {required double progressShare}) async {
     final ffmpegSession = await FFmpegSession.create(
       command,
       (ffmpegSession) async {
@@ -86,10 +82,8 @@ abstract class RenderProcessor<T extends RenderFormat> {
         }
       },
       (Statistics statistics) {
-        final progression = ((statistics.getTime() * 100) ~/
-                    session.settings.capturingDuration.inMilliseconds)
-                .clamp(0, 100) /
-            100;
+        final progression =
+            ((statistics.getTime() * 100) ~/ session.settings.capturingDuration.inMilliseconds).clamp(0, 100) / 100;
         session.recordActivity(
           RenderState.processing,
           progression.toDouble(),
